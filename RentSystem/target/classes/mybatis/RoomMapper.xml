@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.dao.RoomDao">
+
+    <insert id="addRoom" parameterType="org.example.pojo.Room">
+        INSERT INTO hotel_room (room_id, room_no, room_type, price, status)
+        VALUES (room_seq.nextval, #{roomNo}, #{roomType}, #{price}, #{status})
+    </insert>
+
+    <select id="selectTotalCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM hotel_room
+        <where>
+            isdel = 1
+            <if test="keyword != null and keyword != ''">
+                AND (room_no LIKE '%' || #{keyword} || '%' OR room_type LIKE '%' || #{keyword} || '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectRoomPage" parameterType="map" resultType="org.example.pojo.Room">
+        SELECT room_id as roomId, room_no as roomNo, room_type as roomType, price, status, isdel, del_date as delDate
+        FROM (
+        SELECT a.*, ROWNUM rn FROM (
+        SELECT * FROM hotel_room
+        <where>
+            isdel = 1
+            <if test="keyword != null and keyword != ''">
+                AND (room_no LIKE '%' || #{keyword} || '%' OR room_type LIKE '%' || #{keyword} || '%')
+            </if>
+        </where>
+        ORDER BY room_id DESC
+        ) a WHERE ROWNUM &lt;= #{endRow}
+        ) WHERE rn &gt; #{startRow}
+    </select>
+
+    <select id="selectRoomById" parameterType="int" resultType="org.example.pojo.Room">
+        SELECT room_id as roomId, room_no as roomNo, room_type as roomType, price, status, isdel, del_date as delDate
+        FROM hotel_room
+        WHERE room_id = #{roomId} AND isdel = 1
+    </select>
+
+    <update id="updateRoom" parameterType="org.example.pojo.Room">
+        UPDATE hotel_room
+        SET room_no = #{roomNo},
+            room_type = #{roomType},
+            price = #{price},
+            status = #{status}
+        WHERE room_id = #{roomId}
+    </update>
+
+    <update id="logicalDeleteRoom" parameterType="int">
+        UPDATE hotel_room
+        SET isdel = 0, del_date = SYSDATE
+        WHERE room_id = #{roomId}
+    </update>
+
+</mapper>

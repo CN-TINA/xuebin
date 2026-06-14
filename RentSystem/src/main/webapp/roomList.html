@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>尊享云端 - 客房运营大屏</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            margin: 0; padding: 40px 20px; min-height: 100vh; color: #2c3e50;
+            overflow-x: hidden;
+        }
+
+        /* 底层背景全屏轮播图层 */
+        .bg-slider {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -2;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1.5s ease-in-out; /* 1.5秒丝滑淡入淡出 */
+        }
+
+        /* 全屏背景暗色半透明遮罩 */
+        .bg-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            background: rgba(0, 0, 0, 0.25); /* 压暗背景，凸显前景文字 */
+        }
+
+        /* 主容器：高透水晶磨砂玻璃 */
+        .container {
+            max-width: 1200px; margin: 0 auto;
+            background: rgba(255, 255, 255, 0.45); /* 0.45高透明度，清晰透出后面的背景图 */
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); /* 舒适的8px磨砂模糊 */
+            padding: 40px; border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative; z-index: 10;
+        }
+
+        /* 头部大标题布局 */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+            padding-bottom: 20px; margin-bottom: 25px;
+        }
+        .title-box h2 {
+            margin: 0 0 5px 0; font-size: 32px; font-weight: 800; color: #0f172a;
+            letter-spacing: 1px;
+        }
+        .title-box p {
+            margin: 0; font-size: 15px; color: #475569; font-weight: 600;
+        }
+
+        /* 右侧悬浮感录入按钮 */
+        .btn-publish {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: white; padding: 14px 28px; font-size: 16px; font-weight: bold;
+            border-radius: 12px; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            text-decoration: none; transition: all 0.3s;
+        }
+        .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
+
+        /* 独立检索操作台（半透明玻璃态） */
+        .control-panel {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 16px 20px; border-radius: 12px;
+            display: flex; gap: 15px; align-items: center;
+            margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .panel-label { font-weight: 700; color: #334155; font-size: 15px; }
+
+        .search-input {
+            padding: 10px 18px; border: 1px solid #cbd5e1; background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px; width: 300px; font-size: 14px; outline: none; transition: all 0.3s;
+        }
+        .search-input:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;
+        }
+        .btn-primary { background: #334155; color: white; }
+        .btn-primary:hover { background: #0f172a; }
+        .btn-reset { background: rgba(255, 255, 255, 0.8); color: #475569; border: 1px solid #cbd5e1; }
+        .btn-reset:hover { background: white; color: #0f172a; }
+
+        /* 数据表单区 */
+        table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin-top: -5px; }
+        th, td { padding: 18px 20px; text-align: left; }
+        th { font-weight: 700; color: #334155; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid rgba(0, 0, 0, 0.05); padding-bottom: 10px; }
+
+        /* 表格行半透明，悬浮时亮起凸显 */
+        tbody tr { background: rgba(255, 255, 255, 0.5); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.2s; }
+        tbody tr:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); background: rgba(255, 255, 255, 0.9); }
+        td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        /* 核心数据加粗强调 */
+        td:nth-child(2) { font-size: 17px; font-weight: 800; color: #0f172a; }
+        td:nth-child(4) { color: #059669; font-weight: 700; font-size: 17px; }
+
+        /* 运营状态微标 */
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .badge-free { background-color: #d1fae5; color: #059669; border: 1px solid rgba(5, 150, 105, 0.2); }
+        .badge-busy { background-color: #fee2e2; color: #e11d48; border: 1px solid rgba(225, 29, 72, 0.2); }
+
+        /* 操作动作按钮 */
+        .btn-sm { padding: 8px 16px; border-radius: 6px; font-size: 13px; margin-right: 6px; font-weight: 600; }
+        .btn-warning { background: #fdf6e3; color: #d97706; border: 1px solid #fde68a; }
+        .btn-warning:hover { background: #fef3c7; }
+        .btn-danger { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+        .btn-danger:hover { background: #ffe4e6; }
+
+        /* 分页控制杆 */
+        .page-box { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; }
+        .page-btn { padding: 10px 20px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); border-radius: 8px; cursor: pointer; color: #475569; font-weight: 600; transition: all 0.2s; }
+        .page-btn:hover:not(:disabled) { background: white; color: #0f172a; border-color: #94a3b8; }
+        .page-btn:disabled { color: #94a3b8; background: rgba(241,245,249,0.4); cursor: not-allowed; border-color: transparent; }
+        .page-info { font-size: 15px; font-weight: 600; color: #334155; }
+
+        /* 编辑表单悬浮窗 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; width: 420px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .modal-header { font-size: 22px; font-weight: 800; margin-bottom: 25px; color: #0f172a; text-align: center; }
+        .form-item { margin-bottom: 18px; }
+        .form-item label { display: block; margin-bottom: 8px; color: #475569; font-size: 14px; font-weight: 600; }
+        .form-item input, .form-item select {
+            width: 100%; padding: 12px 15px; box-sizing: border-box; border: 1px solid #cbd5e1;
+            border-radius: 8px; background: #f8fafc; font-size: 14px; color: #0f172a; outline: none; transition: border 0.3s;
+        }
+        .form-item input:focus, .form-item select:focus { border-color: #3b82f6; background: white; }
+    </style>
+</head>
+<body>
+
+<div class="bg-slider" id="bgSlider"></div>
+<div class="bg-overlay"></div>
+
+<div class="container">
+    <div class="page-header">
+        <div class="title-box">
+            <h2>🏨 尊享奢华酒店</h2>
+            <p>客房实时运营大屏中心 (Room Operation Center)</p>
+        </div>
+        <div>
+            <a href="roomAdd.html" class="btn-publish">+ 录入新客房</a>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <span class="panel-label">快速过滤：</span>
+        <input type="text" id="keyword" class="search-input" placeholder="输入客房号/房型进行检索...">
+        <button class="btn btn-primary" onclick="searchData()">大屏检索</button>
+        <button class="btn btn-reset" onclick="resetSearch()">重置条件</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>房源ID</th>
+            <th>客房号</th>
+            <th>经典房型</th>
+            <th>基础标价/晚</th>
+            <th>当前状态</th>
+            <th>资产管理操作</th>
+        </tr>
+        </thead>
+        <tbody id="dataBody">
+        </tbody>
+    </table>
+
+    <div class="page-box">
+        <button class="page-btn" id="prevBtn" onclick="changePage(-1)">← 上一页</button>
+        <span class="page-info" id="pageIndicator">1 / 1</span>
+        <button class="page-btn" id="nextBtn" onclick="changePage(1)">下一页 →</button>
+    </div>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">✍️ 更新房源档案</div>
+        <input type="hidden" id="edit_roomId">
+        <div class="form-item"><label>房间号</label><input type="text" id="edit_roomNo"></div>
+        <div class="form-item"><label>经典房型</label><input type="text" id="edit_roomType"></div>
+        <div class="form-item"><label>每晚价格 (￥)</label><input type="number" id="edit_price" step="0.01"></div>
+        <div class="form-item">
+            <label>当前运营状态</label>
+            <select id="edit_status">
+                <option value="0">🟢 干净空闲 (可入住)</option>
+                <option value="1">🔴 宾客有主 (已满房)</option>
+            </select>
+        </div>
+        <div style="text-align: right; margin-top: 30px; gap: 15px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-reset" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="submitUpdate()">保存更改</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 背景图自动化轮播 //
+    const bgImages = [
+        'img/bg1.jpg',
+        'img/bg2.jpg',
+        'img/bg3.jpg',
+        'img/bg4.jpg',
+        'img/bg5.jpg',
+        'img/bg6.jpg'
+    ];
+    let currentBgIndex = 0;
+    const bgSlider = document.getElementById('bgSlider');
+
+    // 静默预加载所有背景图
+    bgImages.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+
+    // 载入第一张初始图
+    bgSlider.style.backgroundImage = `url('${bgImages[0]}')`;
+
+    // 设定5秒自动循环切换
+    setInterval(() => {
+        currentBgIndex = (currentBgIndex + 1) % bgImages.length;
+        bgSlider.style.backgroundImage = `url('${bgImages[currentBgIndex]}')`;
+    }, 5000);
+
+
+    // 后端SSM异步业务对接逻辑 //
+    let currentPage = 1; let totalPage = 1;
+    window.onload = function() { loadData(); };
+
+    function loadData() {
+        let kw = document.getElementById("keyword").value;
+        fetch(`room/list?keyword=${encodeURIComponent(kw)}&pageNo=${currentPage}`)
+            .then(res => res.json())
+            .then(res => {
+                currentPage = res.pageNo; totalPage = res.totalPage;
+                let html = "";
+                if(res.data.length === 0) {
+                    html = "<tr><td colspan='6' style='text-align:center; color:#475569; padding:40px; font-weight:600;'>暂无符合过滤条件的客房数据</td></tr>";
+                } else {
+                    res.data.forEach(item => {
+                        let statusBadge = item.status === 1 ? `<span class="badge badge-busy">已入住</span>` : `<span class="badge badge-free">空闲中</span>`;
+                        html += `<tr>
+                            <td style="color:#64748b; font-weight:600;">#${item.roomId}</td>
+                            <td>${item.roomNo} 房</td>
+                            <td style="color:#475569; font-weight:600;">${item.roomType}</td>
+                            <td>￥${item.price.toFixed(2)}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="openEdit(${item.roomId})">修改</button>
+                                <button class="btn btn-sm btn-danger" onclick="doDelete(${item.roomId}, '${item.roomNo}')">删除</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById("dataBody").innerHTML = html;
+                document.getElementById("pageIndicator").innerText = `${currentPage} / ${totalPage}`;
+                document.getElementById("prevBtn").disabled = (currentPage === 1);
+                document.getElementById("nextBtn").disabled = (currentPage === totalPage);
+            });
+    }
+
+    function searchData() { currentPage = 1; loadData(); }
+    function resetSearch() { document.getElementById("keyword").value = ""; currentPage = 1; loadData(); }
+    function changePage(delta) { currentPage += delta; loadData(); }
+
+    function doDelete(roomId, roomNo) {
+        if(confirm(`⚠️ 确定要从系统清退并彻底移除房间号【${roomNo}】吗？`)) {
+            fetch(`room/delete?roomId=${roomId}`).then(res => res.text()).then(res => {
+                if(res === "success") loadData(); else alert("清退客房失败。");
+            });
+        }
+    }
+
+    function openEdit(roomId) {
+        fetch(`room/get?roomId=${roomId}`).then(res => res.json()).then(data => {
+            document.getElementById("edit_roomId").value = data.roomId;
+            document.getElementById("edit_roomNo").value = data.roomNo;
+            document.getElementById("edit_roomType").value = data.roomType;
+            document.getElementById("edit_price").value = data.price;
+            document.getElementById("edit_status").value = data.status;
+            document.getElementById("editModal").style.display = "flex";
+        });
+    }
+
+    function closeModal() { document.getElementById("editModal").style.display = "none"; }
+
+    function submitUpdate() {
+        let formData = new URLSearchParams();
+        formData.append("roomId", document.getElementById("edit_roomId").value);
+        formData.append("roomNo", document.getElementById("edit_roomNo").value);
+        formData.append("roomType", document.getElementById("edit_roomType").value);
+        formData.append("price", document.getElementById("edit_price").value);
+        formData.append("status", document.getElementById("edit_status").value);
+
+        fetch("room/update", { method: "POST", headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
+            .then(res => res.text()).then(res => {
+            if(res === "success") { closeModal(); loadData(); }
+            else alert("修改失败！");
+        });
+    }
+</script>
+</body>
+</html>

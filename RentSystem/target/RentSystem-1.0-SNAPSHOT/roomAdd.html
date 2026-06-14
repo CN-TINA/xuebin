@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>尊享云端 - 录入全新房源</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #c0d6ff 100%);
+            margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 45px; border-radius: 24px; width: 400px; border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        }
+        h3 {
+            margin-top: 0; margin-bottom: 30px; font-size: 24px; text-align: center;
+            background: linear-gradient(45deg, #0284c7 0%, #6d28d9 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #444; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px 16px; box-sizing: border-box; border: 1px solid #e2e8f0;
+            border-radius: 12px; background: #f8fafc; font-size: 14px; outline: none; transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .btn-submit {
+            width: 100%; padding: 14px; border: none; border-radius: 12px; color: white;
+            font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px;
+            background: linear-gradient(135deg, #0284c7 0%, #3b82f6 100%); transition: all 0.2s;
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(2,132,199,0.2); }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #666; font-size: 13px; text-decoration: none; }
+        .back-link:hover { color: #0284c7; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>🏰 华丽加盟：录入全新客房源</h3>
+    <form action="room/add" method="POST">
+        <div class="form-group">
+            <label>实体房间号</label>
+            <input type="text" name="roomNo" placeholder="请输入真实房号（如: 606, 888）" required>
+        </div>
+        <div class="form-group">
+            <label>经典奢华房型</label>
+            <input type="text" name="roomType" placeholder="大床房 / 双床房 / 电竞套房" required>
+        </div>
+        <div class="form-group">
+            <label>标准销售每晚价格</label>
+            <input type="number" name="price" step="0.01" placeholder="单位: 元/晚" required>
+        </div>
+        <div class="form-group">
+            <label>初始运营状态</label>
+            <select name="status">
+                <option value="0">🟢 干净空闲 (即刻迎宾)</option>
+                <option value="1">🔴 内部锁房 (已满房状态)</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-submit">确认上传并开放房源 🚀</button>
+        <a href="roomList.html" class="back-link">返回客房运营控制台</a>
+    </form>
+</div>
+
+</body>
+</html>
